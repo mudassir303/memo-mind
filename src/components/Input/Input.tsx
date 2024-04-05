@@ -17,7 +17,7 @@ const Input: React.FC<InputProps> = ({
 }) => {
   return (
     <input
-      className={`bg-brand-secondary font-Poppins text-white rounded-md px-4 py-2 w-full outline-none ${otherClasses}`}
+      className={`bg-brand-secondary !font-Poppins text-white rounded-md px-4 py-2 w-full outline-none ${otherClasses}`}
       type={type}
       placeholder={placeholder}
       value={value}
