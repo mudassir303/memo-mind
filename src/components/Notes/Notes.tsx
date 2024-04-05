@@ -119,11 +119,11 @@ const Notes: React.FC = () => {
         Add Note
       </button>
       <div className="mt-10">
-        <div className="flex items-center justify-between">
+        <div className="flex md:flex-row flex-col md:gap-0 gap-6 items-center justify-between">
           <h2 className="text-xl text-white font-medium font-Poppins">
             My Notes
           </h2>
-          <div className="max-w-96 relative">
+          <div className="md:max-w-96 w-full relative">
             <Input
               otherClasses="text-sm placeholder:text-white placeholder:font-light placeholder:text-sm"
               name="search"
