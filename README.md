@@ -21,7 +21,7 @@ Memo Mind is a notes app built using Next.js with TypeScript and Tailwind CSS, f
 
 To get started with Memo Mind, follow these steps:
 
-- Clone the repository: git clone https://github.com/yourusername/memo-mind.git
+- Clone the repository: git clone https://github.com/mudassir303/memo-mind.git
 - Install dependencies: yarn
 - Start the development server: yarn dev
 - Open your browser and navigate to http://localhost:3000
