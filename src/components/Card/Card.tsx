@@ -1,6 +1,7 @@
 import React from "react";
-import styles from "./card.module.css";
+import styles from "./card.module.scss";
 import Image from "next/image";
+import moment from "moment";
 
 interface CardProps {
   title: string;
@@ -27,7 +28,7 @@ const Card: React.FC<CardProps> = ({
       </div>
       <div>
         <p className="text-brand-gray text-base font-Poppins">
-          {date.toDateString()}
+          {moment(date).format("MMM D, YYYY")}
         </p>
       </div>
       <div

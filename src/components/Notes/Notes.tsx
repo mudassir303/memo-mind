@@ -5,6 +5,7 @@ import Input from "../Input/Input";
 import Textarea from "../Textarea/Textarea";
 import Card from "../Card/Card";
 import { v4 as uuidv4 } from "uuid";
+import SearchIcon from "../SearchIcon/SearchIcon";
 
 interface Note {
   id: string;
@@ -22,19 +23,18 @@ const Notes: React.FC = () => {
   });
 
   const [notesList, setNotesList] = useState<Note[]>([]);
-  console.log("notesList", notesList);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     const storedNotes = localStorage.getItem("notes");
+    console.log("storedNotes", storedNotes);
+
     if (storedNotes) {
       setNotesList(JSON.parse(storedNotes));
     }
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("notes", JSON.stringify(notesList));
-  }, [notesList]);
-
+  console.log("notesList", notesList);
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     field: keyof Note
@@ -54,11 +54,9 @@ const Notes: React.FC = () => {
         description: note.description,
         date: new Date(),
       };
-      setNotesList((prevNotesList) => {
-        const updatedNotesList = [...prevNotesList, newNote];
-        localStorage.setItem("notes", JSON.stringify(updatedNotesList));
-        return updatedNotesList;
-      });
+      const updatedNotesList = [...notesList, newNote]; // Append new note to the existing list
+      localStorage.setItem("notes", JSON.stringify(updatedNotesList)); // Store updated list
+      setNotesList(updatedNotesList); // Update state with the new list
       setNote({
         id: "",
         title: "",
@@ -71,17 +69,35 @@ const Notes: React.FC = () => {
   };
 
   const handleDeleteNote = (id: string) => {
-    setNotesList((prevNotesList) => {
-      const updatedNotesList = prevNotesList.filter((note) => note.id !== id);
-      localStorage.setItem("notes", JSON.stringify(updatedNotesList));
-      return updatedNotesList;
-    });
+    const updatedNotesList = notesList.filter((note) => note.id !== id);
+    localStorage.setItem("notes", JSON.stringify(updatedNotesList));
+    setNotesList(updatedNotesList);
   };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const filteredNotes = searchQuery
+    ? notesList.filter(
+        (note) =>
+          note?.title?.toLowerCase().split("")[0] ==
+            searchQuery?.toLowerCase().split("")[0] &&
+          note?.title.toLowerCase().includes(searchQuery)
+      )
+    : notesList;
 
   return (
     <div className="mt-10 mb-20">
-      <div className="mb-6">
+      <h1 className="text-center text-white font-bold text-3xl font-Montserrat">
+        Memo Mind
+      </h1>
+      <p className="text-brand-primary font-medium text-center mt-2 font-Poppins">
+        Where Thoughts Become Notes.
+      </p>
+      <div className="mb-6 mt-10">
         <Input
+          otherClasses=""
           type="text"
           name="title"
           placeholder="Enter Title"
@@ -103,11 +119,34 @@ const Notes: React.FC = () => {
         Add Note
       </button>
       <div className="mt-10">
-        <h2 className="text-xl text-white font-medium font-Poppins">
-          My Notes
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl text-white font-medium font-Poppins">
+            My Notes
+          </h2>
+          <div className="max-w-96 relative">
+            <Input
+              otherClasses="text-sm placeholder:text-white placeholder:font-light placeholder:text-sm"
+              name="search"
+              type="text"
+              placeholder="Search Notes"
+              value={searchQuery}
+              onChange={handleSearch}
+            />
+            <div>
+              <SearchIcon
+                otherClasses="absolute top-2 right-3"
+                width="20"
+                height="20"
+                fill="white"
+              />
+            </div>
+          </div>
+        </div>
+        {filteredNotes.length === 0 && searchQuery && (
+          <p className="text-white text-center mt-10">No matching notes found.</p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 mt-10">
-          {notesList?.map(({ title, description, date, id }, i) => {
+          {filteredNotes?.map(({ title, description, date, id }, i) => {
             return (
               <Card
                 handleDeleteNote={handleDeleteNote}
@@ -115,7 +154,7 @@ const Notes: React.FC = () => {
                 key={i}
                 title={title}
                 description={description}
-                date={date}
+                date={date || undefined}
               />
             );
           })}
