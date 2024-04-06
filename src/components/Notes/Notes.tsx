@@ -83,7 +83,7 @@ const Notes: React.FC = () => {
         (note) =>
           note?.title?.toLowerCase().split("")[0] ==
             searchQuery?.toLowerCase().split("")[0] &&
-          note?.title.toLowerCase().includes(searchQuery)
+          note?.title.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : notesList;
 
