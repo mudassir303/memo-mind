@@ -143,7 +143,12 @@ const Notes: React.FC = () => {
           </div>
         </div>
         {filteredNotes.length === 0 && searchQuery && (
-          <p className="text-white text-center mt-10">No matching notes found.</p>
+          <p className="text-white text-center mt-10">
+            No matching notes found.
+          </p>
+        )}
+        {notesList.length === 0 && !searchQuery && (
+          <p className="text-white text-center mt-10">No Notes added yet</p>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 mt-10">
           {filteredNotes?.map(({ title, description, date, id }, i) => {
