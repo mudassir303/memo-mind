@@ -2,17 +2,17 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 const firebaseConfig = {
-  apiKey: "AIzaSyAYaYswmNFjoXQ8lzau-cA2S38MKUZ7RlY",
-  authDomain: "memo-mind-bb2fb.firebaseapp.com",
-  projectId: "memo-mind-bb2fb",
-  storageBucket: "memo-mind-bb2fb.appspot.com",
-  messagingSenderId: "1005642576814",
-  appId: "1:1005642576814:web:be75dd254f7f6981c88e3f",
-  measurementId: "G-SVZ45FB7Q1"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app)
+const db = getFirestore(app);
 
-export {db}
+export { db };

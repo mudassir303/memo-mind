@@ -6,6 +6,8 @@ import Textarea from "../Textarea/Textarea";
 import Card from "../Card/Card";
 import { v4 as uuidv4 } from "uuid";
 import SearchIcon from "../SearchIcon/SearchIcon";
+import { db } from "@/app/firebaseConfig";
+import { addDoc, collection, onSnapshot, query } from "firebase/firestore";
 
 interface Note {
   id: string;
@@ -34,7 +36,23 @@ const Notes: React.FC = () => {
     }
   }, []);
 
-  console.log("notesList", notesList);
+  useEffect(() => {
+    const fetchNotes = async () => {
+      try {
+        const q = query(collection(db, "notes"));
+        const notesData = onSnapshot(q, (querySnapshot) => {
+          let notesArray: any[] = ([] = []);
+          querySnapshot?.forEach((doc) => {
+            notesArray?.push({ ...doc.data(), id: doc.id });
+          });
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchNotes();
+  }, []);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     field: keyof Note
@@ -46,7 +64,7 @@ const Notes: React.FC = () => {
     }));
   };
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (note.title.trim() !== "" && note.description.trim() !== "") {
       const newNote: Note = {
         id: uuidv4(),
@@ -54,15 +72,16 @@ const Notes: React.FC = () => {
         description: note.description,
         date: new Date(),
       };
-      const updatedNotesList = [...notesList, newNote]; // Append new note to the existing list
-      localStorage.setItem("notes", JSON.stringify(updatedNotesList)); // Store updated list
-      setNotesList(updatedNotesList); // Update state with the new list
+      const updatedNotesList = [...notesList, newNote];
+      localStorage.setItem("notes", JSON.stringify(updatedNotesList));
+      setNotesList(updatedNotesList);
       setNote({
         id: "",
         title: "",
         description: "",
         date: new Date(),
       });
+      await addDoc(collection(db, "notes"), newNote);
     } else {
       alert("Please enter both title and description.");
     }
@@ -77,7 +96,6 @@ const Notes: React.FC = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
-
   const filteredNotes = searchQuery
     ? notesList.filter(
         (note) =>
