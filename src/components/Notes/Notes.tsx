@@ -7,7 +7,17 @@ import Card from "../Card/Card";
 import { v4 as uuidv4 } from "uuid";
 import SearchIcon from "../SearchIcon/SearchIcon";
 import { db } from "@/app/firebaseConfig";
-import { addDoc, collection, onSnapshot, query } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  query,
+  doc,
+  deleteDoc,
+  where,
+  Timestamp 
+} from "firebase/firestore";
+import { UserAuth } from "@/app/context/AuthContext";
 
 interface Note {
   id: string;
@@ -15,8 +25,10 @@ interface Note {
   description: string;
   date: Date;
 }
-
 const Notes: React.FC = () => {
+  const { user } = UserAuth();
+  
+
   const [note, setNote] = useState<Note>({
     id: "",
     title: "",
@@ -28,30 +40,27 @@ const Notes: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
-    const storedNotes = localStorage.getItem("notes");
-    console.log("storedNotes", storedNotes);
-
-    if (storedNotes) {
-      setNotesList(JSON.parse(storedNotes));
-    }
-  }, []);
-
-  useEffect(() => {
     const fetchNotes = async () => {
       try {
-        const q = query(collection(db, "notes"));
+        if (!user) return; // Return if user is not available
+
+        // Query the collection associated with the current user's ID
+        const userNotesCollection = collection(db, `users/${user?.uid}/notes`);
+        const q = query(userNotesCollection);
+        
         const notesData = onSnapshot(q, (querySnapshot) => {
-          let notesArray: any[] = ([] = []);
-          querySnapshot?.forEach((doc) => {
-            notesArray?.push({ ...doc.data(), id: doc.id });
+          let notesArray: Note[] = [];
+          querySnapshot.forEach((doc) => {
+            notesArray.push({ ...doc.data(), id: doc.id } as Note);
           });
+          setNotesList(notesArray);
         });
       } catch (error) {
         console.log(error);
       }
     };
     fetchNotes();
-  }, []);
+  }, [user]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -72,25 +81,20 @@ const Notes: React.FC = () => {
         description: note.description,
         date: new Date(),
       };
-      const updatedNotesList = [...notesList, newNote];
-      localStorage.setItem("notes", JSON.stringify(updatedNotesList));
-      setNotesList(updatedNotesList);
       setNote({
         id: "",
         title: "",
         description: "",
         date: new Date(),
       });
-      await addDoc(collection(db, "notes"), newNote);
+      await addDoc(collection(db, `users/${user?.uid}/notes`), newNote);
     } else {
       alert("Please enter both title and description.");
     }
   };
 
-  const handleDeleteNote = (id: string) => {
-    const updatedNotesList = notesList.filter((note) => note.id !== id);
-    localStorage.setItem("notes", JSON.stringify(updatedNotesList));
-    setNotesList(updatedNotesList);
+  const handleDeleteNote = async (id: string) => {
+    await deleteDoc(doc(db, `users/${user?.uid}/notes`, id));
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,76 +117,86 @@ const Notes: React.FC = () => {
       <p className="text-brand-primary font-medium text-center mt-2 font-Poppins">
         Where Thoughts Become Notes.
       </p>
-      <div className="mb-6 mt-10">
-        <Input
-          otherClasses=""
-          type="text"
-          name="title"
-          placeholder="Enter Title"
-          value={note.title}
-          onChange={(e) => handleInputChange(e, "title")}
-        />
-      </div>
-      <Textarea
-        name="description"
-        placeholder="Enter Description"
-        value={note.description}
-        onChange={(e) => handleInputChange(e, "description")}
-        rows={5}
-      />
-      <button
-        className="bg-brand-primary py-2 px-4 rounded-lg mt-6 text-brand-secondary"
-        onClick={handleAddNote}
-      >
-        Add Note
-      </button>
-      <div className="mt-10">
-        <div className="flex md:flex-row flex-col md:gap-0 gap-6 items-center justify-between">
-          <h2 className="text-xl text-white font-medium font-Poppins">
-            My Notes
-          </h2>
-          <div className="md:max-w-96 w-full relative">
+      {user ? (
+        <div>
+          <div className="mb-6 mt-10">
             <Input
-              otherClasses="text-sm placeholder:text-white placeholder:font-light placeholder:text-sm"
-              name="search"
+              otherClasses=""
               type="text"
-              placeholder="Search Notes"
-              value={searchQuery}
-              onChange={handleSearch}
+              name="title"
+              placeholder="Enter Title"
+              value={note.title}
+              onChange={(e) => handleInputChange(e, "title")}
             />
-            <div>
-              <SearchIcon
-                otherClasses="absolute top-2 right-3"
-                width="20"
-                height="20"
-                fill="white"
-              />
+          </div>
+          <Textarea
+            name="description"
+            placeholder="Enter Description"
+            value={note.description}
+            onChange={(e) => handleInputChange(e, "description")}
+            rows={5}
+          />
+          <button
+            className="bg-brand-primary py-2 px-4 rounded-lg mt-6 text-brand-secondary"
+            onClick={handleAddNote}
+          >
+            Add Note
+          </button>
+          <div className="mt-10">
+            <div className="flex md:flex-row flex-col md:gap-0 gap-6 items-center justify-between">
+              <h2 className="text-xl text-white font-medium font-Poppins">
+                My Notes
+              </h2>
+              <div className="md:max-w-96 w-full relative">
+                <Input
+                  otherClasses="text-sm placeholder:text-white placeholder:font-light placeholder:text-sm"
+                  name="search"
+                  type="text"
+                  placeholder="Search Notes"
+                  value={searchQuery}
+                  onChange={handleSearch}
+                />
+                <div>
+                  <SearchIcon
+                    otherClasses="absolute top-2 right-3"
+                    width="20"
+                    height="20"
+                    fill="white"
+                  />
+                </div>
+              </div>
+            </div>
+            {filteredNotes.length === 0 && searchQuery && (
+              <p className="text-white text-center mt-10">
+                No matching notes found.
+              </p>
+            )}
+            {notesList.length === 0 && !searchQuery && (
+              <p className="text-white text-center mt-10">No Notes added yet</p>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 mt-10">
+              {filteredNotes?.map(({ title, description, date, id }, i) => {
+                const firestoreTimestamp = Timestamp.fromDate(new Date());
+                const newDate = firestoreTimestamp.toDate();
+                return (
+                  <Card
+                    handleDeleteNote={handleDeleteNote}
+                    id={id}
+                    key={i}
+                    title={title}
+                    description={description}
+                    date={newDate || undefined}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>
-        {filteredNotes.length === 0 && searchQuery && (
-          <p className="text-white text-center mt-10">
-            No matching notes found.
-          </p>
-        )}
-        {notesList.length === 0 && !searchQuery && (
-          <p className="text-white text-center mt-10">No Notes added yet</p>
-        )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 mt-10">
-          {filteredNotes?.map(({ title, description, date, id }, i) => {
-            return (
-              <Card
-                handleDeleteNote={handleDeleteNote}
-                id={id}
-                key={i}
-                title={title}
-                description={description}
-                date={date || undefined}
-              />
-            );
-          })}
-        </div>
-      </div>
+      ) : (
+        <p className="p-2 cursor-pointer text-xl text-white text-center font-medium mt-10">
+          Sign in to access Memo Mind
+        </p>
+      )}
     </div>
   );
 };
